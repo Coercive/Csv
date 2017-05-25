@@ -206,7 +206,7 @@ class Importer {
 	}
 
 	/**
-	 * PROCESS LINE
+	 * PROCESS CELL
 	 *
 	 * Receive 3 arguments :
 	 * function( (string) $value , (string) $cellKey , (int) $currentLine )
@@ -218,7 +218,7 @@ class Importer {
 	 * @param callable $cCallback
 	 * @return $this
 	 */
-	public function processLine(callable $cCallback) {
+	public function processCell(callable $cCallback) {
 
 		# Assign
 		$this->_cCallbackProcessLine = $cCallback;
