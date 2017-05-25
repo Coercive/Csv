@@ -49,8 +49,8 @@ $oCsv->setCustomHeader([
 # GET CSV TO ARRAY
 $array = $oCsv->get();
 
-# CUSTOM LINE PROCESS
-$oCsv->processLine(function($value, $cellKey, $currentLine) {
+# CUSTOM CELL PROCESS
+$oCsv->processCell(function($value, $cellKey, $currentLine) {
 
 	/** 
 	 * Receive 3 arguments :
