@@ -43,7 +43,7 @@ class Importer
 	 */
 	private function bom()
 	{
-		if ($this->file->fread(4) !== self::BOM) {
+		if ($this->file->fread(3) !== self::BOM) {
 			$this->file->rewind();
 		}
 	}
