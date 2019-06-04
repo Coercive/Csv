@@ -3,14 +3,13 @@ namespace Coercive\Utility\Csv;
 
 /**
  * Exporter
- * PHP Version 	7
  *
  * @package 	Coercive\Utility\Csv
  * @link		@link https://github.com/Coercive/Csv
  *
  * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   (c) 2016 - 2017 Anthony Moral
- * @license 	http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License
+ * @copyright   2019
+ * @license 	MIT
  */
 class Exporter {
 
