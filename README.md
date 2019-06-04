@@ -47,7 +47,7 @@ $csv->setHeader([
 $array = $csv->get();
 
 # CUSTOM CELL PROCESS
-$csv->processCell(function($value, $cellKey, $currentLine) {
+$csv->callback(function($value, $cellKey, $currentLine) {
 
 	/** 
 	 * Receive 3 arguments :
