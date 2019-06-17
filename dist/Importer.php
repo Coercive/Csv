@@ -120,8 +120,10 @@ class Importer
 		$this->file->rewind();
 
 		# Set probability delimiter
-		$sampled = array_keys($sampled, max($sampled));
-		$this->delimiter = (string) $sampled[0];
+		if($sampled) {
+			$sampled = array_keys($sampled, max($sampled));
+			$this->delimiter = strval($sampled[0] ?? $this->delimiter);
+		}
 
 		# Maintain chainability
 		return $this;
