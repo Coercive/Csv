@@ -160,6 +160,22 @@ class Importer
 	}
 
 	/**
+	 * Retrieve only header like fields given
+	 *
+	 * @param array $fields [optional]
+	 * @return Importer
+	 */
+	public function onlyHeader(array $fields = []): Importer
+	{
+		foreach ($this->header as $k => $name) {
+			if(!in_array($name, $fields, true)) {
+				unset($this->header[$k]);
+			}
+		}
+		return $this;
+	}
+
+	/**
 	 * READ SER CSV FILE
 	 *
 	 * @param int $lines [optional]
