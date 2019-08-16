@@ -148,6 +148,16 @@ class Importer
 	}
 
 	/**
+	 * Export headers
+	 *
+	 * @return array
+	 */
+	public function getHeader(): array
+	{
+		return $this->header;
+	}
+
+	/**
 	 * CUSTOM HEADER
 	 *
 	 * @param array $fields [optional]
