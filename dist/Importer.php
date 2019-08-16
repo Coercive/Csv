@@ -176,7 +176,7 @@ class Importer
 		while ($count < $lines && $this->file->valid()) {
 
 			$data = $this->file->fgetcsv($this->delimiter);
-			if(!$data) { continue; }
+			if(!$data || $data === [0=>null]) { continue; }
 
 			# Named column
 			if ($this->header) {
