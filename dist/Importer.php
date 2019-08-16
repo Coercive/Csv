@@ -183,6 +183,7 @@ class Importer
 				$row = [];
 				foreach ($this->header as $k => $name) {
 					if(null === $name) { continue; }
+					if(!array_key_exists($k, $data)) { continue; }
 					$row[$name] = $data[$k];
 				}
 				$datas[$line] = $row;
