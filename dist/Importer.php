@@ -22,7 +22,7 @@ class Importer
 	private $file;
 
 	/** @var array Csv column header */
-	private $header;
+	private $header = [];
 
 	/** @var string Csv field delimiter */
 	private $delimiter;
