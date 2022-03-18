@@ -22,6 +22,9 @@ $csv = new Importer('path/name.csv');
 # AUTO DETECT DELIMITER
 $csv->detectDelimiter(int test nb line : 10 , array delimiter test list [';', ',']);
 
+# OFFSET SEEK LINE (from start or current position)
+$csv->seek(5, true|false);
+
 # PARSE HEADER
 $csv->parseHeader();
 
