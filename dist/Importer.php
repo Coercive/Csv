@@ -36,6 +36,60 @@ class Importer
 	/** @var callable Custom user process */
 	private $callback = null;
 
+	/** @var bool[] List needed workarounds */
+	private $workarounds = [
+		'seek_workaround' => false
+	];
+
+	/**
+	 * Prepare and list needed workarounds status
+	 *
+	 * @return void
+	 */
+	private function workarounds()
+	{
+		$this->workarounds['seek_workaround'] = !version_compare(PHP_VERSION, '8.0.1', '>=');
+	}
+
+	/**
+	 * There is a bug in php for seeking files
+	 * seems solved php version > 8.0.1
+	 *
+	 * @author info@inatica.com
+	 * @link https://www.php.net/manual/en/splfileobject.seek.php#126365
+	 *
+	 * @param int $line
+	 * @param bool $rewind [optional]
+	 * @return void
+	 */
+	private function seek_workaround(int $line, bool $rewind = true)
+	{
+		# 0 === rewind
+		if($rewind || $line === 0) {
+			$this->file->rewind();
+		}
+		if($line === 0) {
+			return;
+		}
+
+		# If PHP > 8.0.1
+		if (!$this->workarounds['seek_workaround']) {
+			$this->file->seek($line);
+			return;
+		}
+
+		# If lower version of PHP
+		if($line === 1 && $this->file->key() === 0) {
+			# Consumes one line into nothingness
+			$this->file->fgets();
+		}
+
+		# The line before (-1) for all other cases.
+		else {
+			$this->file->seek($line - 1);
+		}
+	}
+
 	/**
 	 * If BOM is detected, the file pointer move to the 4th character, else rewind.
 	 *
@@ -71,6 +125,9 @@ class Importer
 		if (!$this->file->isFile() || !$this->file->isReadable()) {
 			throw new Exception('Can\'t open CSV File.');
 		}
+
+		# Workaround adaptations
+		$this->workarounds();
 	}
 
 	/**
@@ -130,15 +187,31 @@ class Importer
 	}
 
 	/**
+	 * Seek to targeted line or add offset from the current position
+	 *
+	 * @param int $line
+	 * @param bool $rewind [optional]
+	 * @return $this
+	 */
+	public function seek(int $line, bool $rewind = true): Importer
+	{
+		$this->seek_workaround($line, $rewind);
+		return $this;
+	}
+
+	/**
 	 * PARSE HEADER
 	 *
+	 * @param bool $rewind [optional]
 	 * @return Importer
 	 */
-	public function parseHeader(): Importer
+	public function parseHeader(bool $rewind = true): Importer
 	{
 		# Init pointer / bom
-		$this->file->rewind();
-		$this->bom();
+		if($rewind) {
+			$this->file->rewind();
+			$this->bom();
+		}
 
 		# Get header struct
 		$this->header = $this->file->fgetcsv($this->delimiter, $this->enclosure, $this->escape);
