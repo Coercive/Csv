@@ -66,7 +66,7 @@ class Importer
 	{
 		# 0 === rewind
 		if($rewind || $line === 0) {
-			$this->file->rewind();
+			$this->reset();
 		}
 		if($line === 0) {
 			return;
@@ -126,6 +126,9 @@ class Importer
 			throw new Exception('Can\'t open CSV File.');
 		}
 
+		# Reset pointer position
+		$this->reset();
+
 		# Workaround adaptations
 		$this->workarounds();
 	}
@@ -152,8 +155,9 @@ class Importer
 		# Init
 		$i = 0;
 		$sampled = [];
-		$this->file->rewind();
-		$this->bom();
+
+		# Reset pointer position
+		$this->reset();
 
 		# Loop count probability delimiter
 		while($this->file->valid() && $i <= $lines)
@@ -173,8 +177,8 @@ class Importer
 			$i++;
 		}
 
-		# Reset pointer
-		$this->file->rewind();
+		# Reset pointer position
+		$this->reset();
 
 		# Set probability delimiter
 		if($sampled) {
@@ -183,6 +187,18 @@ class Importer
 		}
 
 		# Maintain chainability
+		return $this;
+	}
+
+	/**
+	 * Reset point position
+	 *
+	 * @return $this
+	 */
+	public function reset(): Importer
+	{
+		$this->file->rewind();
+		$this->bom();
 		return $this;
 	}
 
@@ -207,10 +223,9 @@ class Importer
 	 */
 	public function parseHeader(bool $rewind = true): Importer
 	{
-		# Init pointer / bom
+		# Reset pointer position
 		if($rewind) {
-			$this->file->rewind();
-			$this->bom();
+			$this->reset();
 		}
 
 		# Get header struct
