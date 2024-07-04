@@ -246,6 +246,16 @@ class Importer
 	}
 
 	/**
+	 * Export delimiter
+	 *
+	 * @return string
+	 */
+	public function getDelimiter(): string
+	{
+		return $this->delimiter;
+	}
+
+	/**
 	 * CUSTOM HEADER
 	 *
 	 * @param array $fields [optional]
