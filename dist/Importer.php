@@ -18,20 +18,28 @@ class Importer
 {
 	const BOM = "\xef\xbb\xbf";
 
+	const ENCODINGS = ['UTF-8', 'ISO-8859-1', 'Windows-1252', 'ASCII'];
+
 	/** @var SplFileObject CSV file */
 	private $file;
 
 	/** @var array Csv column header */
-	private $header = [];
+	private array $header = [];
+
+	/** @var string Csv target encoding */
+	private string $targetEncoding = 'UTF-8';
+
+	/** @var string Csv field encoding */
+	private string $encoding = '';
 
 	/** @var string Csv field delimiter */
-	private $delimiter;
+	private string $delimiter;
 
 	/** @var string Csv field enclosure */
-	private $enclosure;
+	private string $enclosure;
 
 	/** @var string Csv escape */
-	private $escape;
+	private string $escape;
 
 	/** @var callable Custom user process */
 	private $callback = null;
@@ -191,6 +199,62 @@ class Importer
 	}
 
 	/**
+	 * AUTO DETECT CSV ENCODING
+	 *
+	 * @param int $lines
+	 * @param array $encodings
+	 * @return Importer
+	 */
+	public function detectEncoding(int $lines = 10, array $encodings = self::ENCODINGS): Importer
+	{
+		# Init
+		$i = 0;
+
+		# Reset pointer position
+		$this->reset();
+
+		# Loop count probability delimiter
+		$sample = '';
+		while($this->file->valid() && $i <= $lines)
+		{
+			$sample .= $this->file->fgets();
+		}
+
+		# Reset pointer position
+		$this->reset();
+
+		# Update detected encoding
+		$this->encoding = mb_detect_encoding($sample, $encodings, true) ?: 'UTF-8';
+
+		# Maintain chainability
+		return $this;
+	}
+
+	/**
+	 * Mannualy set file encoding
+	 *
+	 * @param string $encoding
+	 * @return $this
+	 */
+	public function setTargetEncoding(string $encoding): self
+	{
+		$this->targetEncoding = $encoding;
+		return $this;
+	}
+
+	/**
+	 * Mannualy set file encoding
+	 *
+	 * @param string $encoding
+	 * @return $this
+	 */
+	public function setEncoding(string $encoding): self
+	{
+		$this->encoding = $encoding;
+		return $this;
+	}
+
+	/**
 	 * Reset point position
 	 *
 	 * @return $this
@@ -230,6 +294,13 @@ class Importer
 
 		# Get header struct
 		$this->header = $this->file->fgetcsv($this->delimiter, $this->enclosure, $this->escape);
+
+		# Transcoding each field if necessary
+		if ($this->encoding && $this->targetEncoding && $this->encoding !== $this->targetEncoding) {
+			foreach ($this->header as $k => $name) {
+				$this->header[$k] = mb_convert_encoding($name, $this->targetEncoding, $this->encoding);
+			}
+		}
 
 		# Maintain chainability
 		return $this;
@@ -316,6 +387,13 @@ class Importer
 			# Numeric column
 			else {
 				$datas[$line] = $data;
+			}
+
+			# Transcoding each field if necessary
+			if ($this->encoding && $this->targetEncoding && $this->encoding !== $this->targetEncoding) {
+				foreach ($datas[$line] as $k => $v) {
+					$datas[$line][$k] = mb_convert_encoding($v, $this->targetEncoding, $this->encoding);
+				}
 			}
 
 			# Process line / elements
