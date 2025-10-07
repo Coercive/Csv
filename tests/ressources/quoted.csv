@@ -1,0 +1,5 @@
+"id","comment","amount"
+1,"This is a ""quoted, field""",10.5
+2,"Line with
+newline",20.0
+3,"Simple text",30.0

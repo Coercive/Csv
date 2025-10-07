@@ -7,12 +7,12 @@ use Exception;
 /**
  * Importer
  *
- * @package 	Coercive\Utility\Csv
- * @link	https://github.com/Coercive/Csv
+ * @package Coercive\Utility\Csv
+ * @link https://github.com/Coercive/Csv
  *
- * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   2019
- * @license 	MIT
+ * @author Anthony Moral <contact@coercive.fr>
+ * @copyright 2025
+ * @license MIT
  */
 class Importer
 {
@@ -41,11 +41,11 @@ class Importer
 	/** @var string Csv escape */
 	private string $escape;
 
-	/** @var callable Custom user process */
+	/** @var callable|null Custom user process */
 	private $callback = null;
 
 	/** @var bool[] List needed workarounds */
-	private $workarounds = [
+	private array $workarounds = [
 		'seek_workaround' => false
 	];
 
@@ -54,7 +54,7 @@ class Importer
 	 *
 	 * @return void
 	 */
-	private function workarounds()
+	private function workarounds(): void
 	{
 		$this->workarounds['seek_workaround'] = !version_compare(PHP_VERSION, '8.0.1', '>=');
 	}
@@ -70,7 +70,7 @@ class Importer
 	 * @param bool $rewind [optional]
 	 * @return void
 	 */
-	private function seek_workaround(int $line, bool $rewind = true)
+	private function seek_workaround(int $line, bool $rewind = true): void
 	{
 		# 0 === rewind
 		if($rewind || $line === 0) {
@@ -103,7 +103,7 @@ class Importer
 	 *
 	 * @return void
 	 */
-	private function bom()
+	private function bom(): void
 	{
 		if ($this->file->fread(3) !== self::BOM) {
 			$this->file->rewind();
@@ -127,9 +127,10 @@ class Importer
 		$this->escape = $escape;
 
 		# Open file
+		$previousLineEnding = ini_get('auto_detect_line_endings');
 		ini_set('auto_detect_line_endings', true);
 		$this->file = new SplFileObject($path);
-		ini_set('auto_detect_line_endings', false);
+		ini_set('auto_detect_line_endings', $previousLineEnding);
 		if (!$this->file->isFile() || !$this->file->isReadable()) {
 			throw new Exception('Can\'t open CSV File.');
 		}

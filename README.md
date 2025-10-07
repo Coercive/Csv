@@ -92,9 +92,6 @@ $csv->addLines([
     ...
 ]);
 
-# GET ERROR
-$csv->getErrors();
-
 # CLOSE MANUALLY OR AUTO
 $csv->close();
 # OR

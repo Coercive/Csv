@@ -1,6 +1,9 @@
 <?php
 namespace Coercive\Utility\Csv;
 
+use InvalidArgumentException;
+use RuntimeException;
+
 /**
  * Exporter
  *
@@ -8,153 +11,137 @@ namespace Coercive\Utility\Csv;
  * @link		@link https://github.com/Coercive/Csv
  *
  * @author  	Anthony Moral <contact@coercive.fr>
- * @copyright   2019
+ * @copyright   2025
  * @license 	MIT
  */
-class Exporter {
-
+class Exporter
+{
 	/** @var resource */
-	private $_rFile;
+	private $stream;
 
-	/** @var array */
-	private $_aErrors = [];
+	private string $delimiter = '';
 
-	/** @var string */
-	private $_sDelimiter = '';
+	private string $enclosure = '';
 
-	/** @var string */
-	private $_sEnclosure = '';
-
-	/** @var bool */
-	private $_bMysqlNull = false;
+	private bool $mysqlNull = false;
 
 	/**
-	 * ERROR
+	 * Exporter constructor.
 	 *
-	 * @param string $sMessage
+	 * @param string $filepath
+	 * @param string $delimiter [optional]
+	 * @param string $enclosure [optional]
+	 * @param bool $mysqlNull [optional] Puts a string 'NULL' instead of a null value
+	 * @return void
+	 * @throws InvalidArgumentException
+	 * @throws RuntimeException
 	 */
-	protected function _setError($sMessage) {
-		$this->_aErrors[] = $sMessage;
-	}
-
-	/**
-	 * GETTER ERROR
-	 *
-	 * @return array
-	 */
-	public function getErrors() {
-		return (array) $this->_aErrors;
-	}
-
-	/**
-	 * CsvWriter constructor.
-	 *
-	 * @param string $sFilePath
-	 * @param string $sDelimiter [optional]
-	 * @param string $sEnclosure [optional]
-	 * @param bool $bMysqlNull [optional]
-	 */
-	public function __construct($sFilePath, $sDelimiter = ',', $sEnclosure = '"', $bMysqlNull = false) {
-
-		# NOT DIRECTORY : create
-		if(!file_exists($sFilePath) || !is_file($sFilePath)) {
-
-			if(!preg_match('`^(?P<path>.*)\/.*$`', $sFilePath, $aMatches)) { $this->_setError('Destpath match error'); return; }
-			if(!is_dir($aMatches['path'])) {
-				if(!mkdir($aMatches['path'], 0755, true)) {
-					$this->_setError('Failure when creating directory'); return;
+	public function __construct(string $filepath, string $delimiter = ',', string $enclosure = '"', bool $mysqlNull = false)
+	{
+		if(!$filepath) {
+			throw new InvalidArgumentException('Filepath not specified');
+		}
+		if(!is_file($filepath)) {
+			if (preg_match('/[<>:"\'§&@#!(){}\[\]|?*]/', $filepath)) {
+				throw new InvalidArgumentException('Invalid chars in file path: ' . $filepath);
+			}
+			if(!preg_match('`^(?P<path>.*)/.*$`', $filepath, $matches)) {
+				throw new InvalidArgumentException('Invalid directory path: ' . $filepath);
+			}
+			if(!is_dir($matches['path'])) {
+				if(!mkdir($matches['path'], 0755, true)) {
+					throw new RuntimeException('Unable to create directory: ' . $matches['path']);
 				}
 			}
-
 		}
 
 		# Create/Write in file
-		$this->_rFile = fopen($sFilePath, 'a');
+		$this->stream = fopen($filepath, 'a');
 
 		# Set Delimiter
-		$this->_sDelimiter = $sDelimiter;
+		$this->delimiter = $delimiter;
 
 		# Set Enclosure
-		$this->_sEnclosure = $sEnclosure;
+		$this->enclosure = $enclosure;
 
 		# Set MySQL NULL
-		$this->_bMysqlNull = $bMysqlNull;
-
+		$this->mysqlNull = $mysqlNull;
 	}
 
 	/**
-	 * CsvWriter destructor.
+	 * Exporter destructor.
+	 *
+	 * @return void
 	 */
-	public function __destruct() {
+	public function __destruct()
+	{
 		$this->close();
 	}
 
 	/**
-	 * CLOSE FILE
+	 * Close file
+	 *
+	 * @return void
 	 */
-	public function close() {
-		if(is_resource($this->_rFile)) {
-			fclose($this->_rFile);
+	public function close(): void
+	{
+		if(is_resource($this->stream)) {
+			fclose($this->stream);
 		}
 	}
 
 	/**
-	 * ADD HEADER
+	 * Add header
 	 *
-	 * @param array $aHeader
-	 */
-	public function addHeader($aHeader) {
-		fputcsv($this->_rFile, $aHeader, $this->_sDelimiter);
-	}
-
-	/**
-	 * ADD ONE LINE
-	 *
-	 * @param array $aOneLine
-	 * @param bool $bSqlMode [optional]
+	 * @param array $fields
 	 * @return $this
 	 */
-	public function addLine($aOneLine, $bSqlMode = false) {
-
-		# NORMAL MODE
-		if(!$bSqlMode) {
-			fputcsv($this->_rFile, $aOneLine, $this->_sDelimiter);
-			return $this;
-		}
-
-		# SQL MODE
-		$sDelimiterEscape = preg_quote($this->_sDelimiter, '`');
-		$sEnclosureEscape = preg_quote($this->_sEnclosure, '`');
-
-		$aOutput = [];
-		foreach ($aOneLine as $mField) {
-			if ($mField === null && $this->_bMysqlNull) {
-				$aOutput[] = 'NULL';
-				continue;
-			}
-
-			$aOutput[] = preg_match("`(?:$sDelimiterEscape|$sEnclosureEscape|\s)`", $mField) ? (
-				$this->_sEnclosure . str_replace($this->_sEnclosure, $this->_sEnclosure . $this->_sEnclosure, $mField) . $this->_sEnclosure
-			) : $mField;
-		}
-
-		fwrite($this->_rFile, join($this->_sDelimiter, $aOutput) . "\n");
-
+	public function addHeader(array $fields): self
+	{
+		fputcsv($this->stream, $fields, $this->delimiter, $this->enclosure);
 		return $this;
-
 	}
 
 	/**
-	 * ADD MULTI LINES
+	 * Add one line
 	 *
-	 * @param array $aMultiLines
+	 * @param array $fields
 	 * @return $this
 	 */
-	public function addLines($aMultiLines) {
-		foreach ($aMultiLines as $aOneLine) {
+	public function addLine(array $fields): self
+	{
+		if($this->mysqlNull) {
+			foreach ($fields as &$field) {
+				if ($field === null) {
+					$field = 'NULL';
+				}
+			}
+		}
+		fputcsv($this->stream, $fields, $this->delimiter, $this->enclosure);
+		return $this;
+	}
+
+	/**
+	 * Add multi lines
+	 *
+	 * @param array $lines
+	 * @return $this
+	 */
+	public function addLines(array $lines): self
+	{
+		foreach ($lines as $aOneLine) {
 			$this->addLine($aOneLine);
 		}
 		return $this;
 	}
 
+	/**
+	 * @param bool $enable
+	 * @return $this
+	 */
+	public function setSqlNull(bool $enable): self
+	{
+		$this->mysqlNull = $enable;
+		return $this;
+	}
 }
