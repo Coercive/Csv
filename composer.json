@@ -5,8 +5,8 @@
     "homepage": "http://coercive.fr",
     "license": "MIT",
     "licenses": [{
-      "type": "MIT",
-      "url": "https://github.com/Coercive/Csv/blob/master/LICENSE.txt"
+        "type": "MIT",
+        "url": "https://github.com/Coercive/Csv/blob/master/LICENSE.txt"
     }],
     "authors": [
         {
